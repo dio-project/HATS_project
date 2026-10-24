@@ -10,3 +10,6 @@ Edit a setting, select Review & confirm, inspect the version/digest, and type AP
 This repository is not live-trading capable. Required gates include durable config and risk state; authentication/authorization; secure credentials; broker capability discovery; market-data normalization and quality checks; deterministic risk engine integration; idempotent order submission and reconciliation; operational pause/kill controls; alerts/metrics; recovery procedures; and independently reviewed tests.
 
 Test duplicate submissions, partial fills, unknown order status after timeout, reconnect and restart, stale/out-of-order bars, DST transitions, weekends/session boundaries, spread widening, price gaps, daily-loss and drawdown breaches, and rejected protective orders. Never commit secrets or production environment files.
+
+## Configuration history
+The Configurations section lists versioned snapshots, lets a user load a snapshot into the editor, and requires the normal review/confirmation workflow to activate it. Clearing saved history requires typing CLEAR HISTORY; it retains the active configuration. Both configuration history and audit records are in-memory in this development scaffold and are not durable across API restarts.
