@@ -14,6 +14,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http
 _active = SystemConfig()
 _drafts: dict[str, dict] = {}
 _audit: list[dict] = []
+_history: list[dict] = [{"version": _active.version, "updated_at": _active.updated_at.isoformat(), "config": _active.model_dump(mode="json"), "label": "Initial defaults"}]
 
 def utc_now():
     return datetime.now(timezone.utc)
@@ -35,6 +36,26 @@ def get_config():
 @app.get("/api/audit")
 def get_audit():
     return {"events": deepcopy(_audit[-100:])}
+
+@app.get("/api/config/history")
+def get_config_history():
+    return {"configurations": [{"version": item["version"], "updated_at": item["updated_at"], "label": item["label"]} for item in reversed(_history)], "active_version": _active.version}
+
+@app.get("/api/config/history/{version}")
+def get_config_version(version: int):
+    item = next((entry for entry in _history if entry["version"] == version), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Configuration version not found")
+    return {"configuration": deepcopy(item["config"]), "label": item["label"]}
+
+@app.post("/api/config/history/clear")
+def clear_config_history(payload: dict):
+    global _history
+    if payload.get("confirmation_phrase") != "CLEAR HISTORY":
+        raise HTTPException(status_code=400, detail="Confirmation phrase does not match")
+    _history = [{"version": _active.version, "updated_at": _active.updated_at.isoformat(), "config": _active.model_dump(mode="json"), "label": "Active configuration (retained)"}]
+    _audit.append({"at": utc_now().isoformat(), "event": "config_history_cleared", "active_version_retained": _active.version})
+    return {"status": "cleared", "active_version_retained": _active.version}
 
 @app.post("/api/config/drafts")
 def create_draft(request: DraftRequest):
@@ -69,6 +90,7 @@ def confirm_draft(request: ConfirmRequest):
     candidate = SystemConfig.model_validate(draft["config"])
     previous_version = _active.version
     _active = candidate
+    _history.append({"version": _active.version, "updated_at": _active.updated_at.isoformat(), "config": _active.model_dump(mode="json"), "label": f"Configuration v{_active.version}"})
     del _drafts[request.draft_id]
     _audit.append({"at": utc_now().isoformat(), "event": "config_activated", "previous_version": previous_version, "active_version": _active.version, "digest": draft["digest"]})
     return {"status": "activated", "active": _active.model_dump(mode="json"), "audit_event_recorded": True}
