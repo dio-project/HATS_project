@@ -34,3 +34,21 @@ def test_market_fallback_rejected():
     active["layer3"]["rules"]["market_order_fallback"] = True
     response = client.post("/api/config/drafts", json={"expected_version": active["version"], "proposed_config": active})
     assert response.status_code == 422
+
+def test_configuration_history_and_confirmed_clear():
+    history = client.get("/api/config/history")
+    assert history.status_code == 200
+    assert history.json()["configurations"]
+    active = client.get("/api/config").json()["active"]
+    version = active["version"]
+    fetched = client.get(f"/api/config/history/{version}")
+    assert fetched.status_code == 200
+    assert fetched.json()["configuration"]["version"] == version
+    rejected = client.post("/api/config/history/clear", json={"confirmation_phrase": "no"})
+    assert rejected.status_code == 400
+    cleared = client.post("/api/config/history/clear", json={"confirmation_phrase": "CLEAR HISTORY"})
+    assert cleared.status_code == 200
+    assert cleared.json()["active_version_retained"] == version
+    after = client.get("/api/config/history").json()["configurations"]
+    assert len(after) == 1
+    assert after[0]["version"] == version
