@@ -1,12 +1,13 @@
-"""HATS configuration and health API backed by durable SQL storage."""
+"""HATS configuration, health, and market-data API."""
 from datetime import UTC, datetime
 from uuid import uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from hats_api.config import ConfirmRequest, DraftRequest
+from hats_api.market_data import CandleEvent, MarketDataService
 from hats_api.storage import (
     ConfigStore,
     DraftNotFound,
@@ -14,7 +15,7 @@ from hats_api.storage import (
     VersionConflict,
 )
 
-app = FastAPI(title="HATS API", version="0.2.0")
+app = FastAPI(title="HATS API", version="0.3.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -25,6 +26,7 @@ app.add_middleware(
 
 store = ConfigStore()
 store.initialize()
+market_data = MarketDataService(store)
 
 
 def utc_now():
@@ -128,6 +130,39 @@ def time_now(timezone_name: str = "UTC"):
     }
 
 
+@app.post("/api/market-data/candles")
+def ingest_market_candle(candle: CandleEvent):
+    result = market_data.ingest(candle)
+    if result.status == "conflict":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "A different candle already exists for this source and interval.",
+                **result.model_dump(),
+            },
+        )
+    return result.model_dump()
+
+
+@app.get("/api/market-data/candles")
+def get_market_candles(
+    symbol: str = Query(min_length=3, max_length=20),
+    timeframe: str = Query(pattern="^(5m|15m|30m|1h|5h|12h|1d)$"),
+    limit: int = Query(default=500, ge=1, le=5000),
+):
+    return {"candles": market_data.get_candles(symbol, timeframe, limit)}
+
+
+@app.get("/api/market-data/quality")
+def get_market_data_quality(limit: int = Query(default=100, ge=1, le=1000)):
+    return {"events": market_data.get_quality_events(limit)}
+
+
+@app.get("/api/market-data/health")
+def get_market_data_health():
+    return market_data.health()
+
+
 @app.get("/api/system/status")
 def system_status():
     active = store.get_active()
@@ -137,5 +172,5 @@ def system_status():
         "layer3b_enabled": False,
         "broker_connected": False,
         "trading_enabled": False,
-        "note": "Scaffold only; broker execution is not implemented.",
+        "note": "Market-data contracts and persistence are available; no provider or broker execution is active.",
     }
