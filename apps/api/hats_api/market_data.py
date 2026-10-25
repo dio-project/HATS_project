@@ -6,7 +6,7 @@ never silently repairs OHLC values or assumes a provider's timestamp convention.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -82,7 +82,7 @@ class CandleEvent(BaseModel):
 
 
 class CandleIngestResult(BaseModel):
-    status: Literal["accepted", "duplicate", "conflict"]
+    status: Literal["accepted", "duplicate", "conflict", "rejected"]
     candle_id: int | None = None
     quality_events: list[str] = Field(default_factory=list)
 
@@ -190,8 +190,18 @@ class MarketDataService:
                     quality_events=[event_type],
                 )
 
-            quality_events: list[str] = []
             now = utc_now()
+            if candle.close_time_utc > now + timedelta(seconds=60):
+                self._quality(
+                    session, candle, "future_timestamp", "error",
+                    {"close_time_utc": self._iso(candle.close_time_utc),
+                     "allowed_future_skew_seconds": 60},
+                )
+                return CandleIngestResult(
+                    status="rejected", quality_events=["future_timestamp"]
+                )
+
+            quality_events: list[str] = []
             age = (now - candle.close_time_utc).total_seconds()
             if age > self.max_staleness_seconds:
                 quality_events.append("stale_candle")
@@ -295,9 +305,13 @@ class MarketDataService:
             latest = session.scalar(
                 select(MarketCandle).order_by(MarketCandle.ingested_at.desc()).limit(1)
             )
+            error_cutoff = self._iso(utc_now() - timedelta(minutes=5))
             recent_errors = session.scalar(
                 select(MarketDataQualityEvent)
-                .where(MarketDataQualityEvent.severity == "error")
+                .where(
+                    MarketDataQualityEvent.severity == "error",
+                    MarketDataQualityEvent.event_at >= error_cutoff,
+                )
                 .order_by(MarketDataQualityEvent.id.desc())
                 .limit(1)
             )
