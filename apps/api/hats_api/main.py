@@ -141,6 +141,14 @@ def ingest_market_candle(candle: CandleEvent):
                 **result.model_dump(),
             },
         )
+    if result.status == "rejected":
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Candle timestamp is too far in the future.",
+                **result.model_dump(),
+            },
+        )
     return result.model_dump()
 
 
