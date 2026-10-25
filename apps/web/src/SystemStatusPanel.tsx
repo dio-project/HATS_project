@@ -99,7 +99,7 @@ export default function SystemStatusPanel({ apiBaseUrl }: Props) {
             <div><small>Layer 3B / Sentinel</small><b>{status.layer3b_enabled ? "Enabled" : "Excluded"}</b></div>
           </div>
           <h3>Backend-reported pipeline</h3>
-          <div className="pipeline">{status.pipeline.map((stage, index) => (
+          <div className="pipeline-list">{status.pipeline.map((stage, index) => (
             <div className="pipeline-row" key={stage}>
               <b>{String(index + 1).padStart(2, "0")} · {STAGE_LABELS[stage] ?? stage}</b>
               <span>{stage === "layer4_risk" ? "Deterministic veto authority · implementation pending" : stage === "market_data" ? "Canonical ingestion available · provider adapter pending" : "Contract/inference integration pending"}</span>
