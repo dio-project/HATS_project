@@ -27,6 +27,10 @@ where = ["apps/api"]
 testpaths = ["tests"]
 pythonpath = ["apps/api"]
 addopts = "-q"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint.isort]
+known-first-party = ["hats_api"]
