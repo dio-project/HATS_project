@@ -2,10 +2,14 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from hats_api.market_data import CandleEvent, MarketDataService
-from hats_api.main import store
+from hats_api.main import app, store
+
+
+client = TestClient(app)
 
 
 def candle(
@@ -102,3 +106,28 @@ def test_closed_bar_and_health_status_are_explicit():
     assert result.status == "accepted"
     assert service.get_candles("EURUSD", "1h")[0]["is_closed"] is False
     assert service.health()["trading_input_eligible"] is False
+
+
+def test_market_data_api_ingests_lists_and_reports_health():
+    payload = candle().model_dump(mode="json")
+    accepted = client.post("/api/market-data/candles", json=payload)
+    assert accepted.status_code == 200
+    assert accepted.json()["status"] == "accepted"
+
+    fetched = client.get(
+        "/api/market-data/candles", params={"symbol": "EURUSD", "timeframe": "1h"}
+    )
+    assert fetched.status_code == 200
+    assert len(fetched.json()["candles"]) == 1
+    assert fetched.json()["candles"][0]["open_time_utc"].endswith("+00:00")
+
+    health = client.get("/api/market-data/health")
+    assert health.status_code == 200
+    assert health.json()["trading_input_eligible"] is True
+
+
+def test_market_data_api_rejects_naive_timestamp():
+    payload = candle().model_dump(mode="json")
+    payload["open_time_utc"] = "2026-01-01T10:00:00"
+    response = client.post("/api/market-data/candles", json=payload)
+    assert response.status_code == 422
