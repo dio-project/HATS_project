@@ -6,7 +6,6 @@ from hats_api.main import app, store
 from hats_api.market_data import CandleEvent, MarketDataService
 from pydantic import ValidationError
 
-
 client = TestClient(app)
 
 
