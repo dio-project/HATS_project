@@ -25,7 +25,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from hats_api.storage import Base, ConfigStore, utc_now
 
-
 Timeframe = Literal["5m", "15m", "30m", "1h", "5h", "12h", "1d"]
 
 
