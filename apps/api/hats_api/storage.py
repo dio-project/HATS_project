@@ -7,11 +7,9 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Iterator
-from urllib.parse import urlparse
 
 from sqlalchemy import ForeignKey, Integer, String, Text, create_engine, delete, select
 from sqlalchemy.engine import Engine, make_url
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -294,8 +292,6 @@ class ConfigStore:
             active = session.get(ConfigurationSnapshot, state.active_version)
             if active is None:
                 raise RuntimeError("Active configuration snapshot is missing")
-            active_config = active.config_json
-            active_updated_at = active.updated_at
             session.execute(
                 delete(ConfigurationSnapshot).where(
                     ConfigurationSnapshot.version != state.active_version

@@ -1,7 +1,5 @@
 """HATS configuration and health API backed by durable SQL storage."""
-import json
 from datetime import UTC, datetime
-from hashlib import sha256
 from uuid import uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
