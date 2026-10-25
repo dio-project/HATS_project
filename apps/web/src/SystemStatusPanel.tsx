@@ -113,7 +113,7 @@ export default function SystemStatusPanel({ apiBaseUrl }: Props) {
         <label className="field"><span>Display time zone</span><select value={timezone} onChange={(event) => setTimezone(event.target.value)}>{TIMEZONES.map((zone) => <option key={zone}>{zone}</option>)}</select></label>
         <div className="api-time-grid">
           <div><small>UTC</small><b>{formatUtc(apiTime?.utc)}</b></div>
-          <div><small>{timezone}</small><b>{apiTime ? new Date(apiTime.local).toLocaleString("en-GB", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—"}</b></div>
+          <div><small>{timezone}</small><b>{apiTime ? new Date(apiTime.local).toLocaleString("en-GB", { timeZone: timezone, timeZoneName: "short", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—"}</b></div>
         </div>
         <p className="market-caption">Unix time (ms): {apiTime?.unix_ms ?? "—"} · Refreshes every 30 seconds.</p>
       </div>
