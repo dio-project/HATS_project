@@ -156,9 +156,9 @@ export default function MarketDataPanel({ apiBaseUrl }: Props) {
           <p>{health?.reason ?? "Waiting for market-data health response."}</p>
         </article>
         <article className="market-metric">
-          <small>Latest candle close · UTC</small>
+          <small>Latest ingested candle close · UTC</small>
           <strong className="metric-date">{utc(health?.latest_candle_at_utc)}</strong>
-          <p>Age: {ageLabel(health?.age_seconds ?? null)}</p>
+          <p>Age: {ageLabel(health?.age_seconds ?? null)} · global across stored symbols and timeframes</p>
         </article>
         <article className="market-metric">
           <small>Recent quality errors</small>
