@@ -71,7 +71,7 @@ class CandleEvent(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_ohlc_and_times(self) -> "CandleEvent":
+    def validate_ohlc_and_times(self) -> CandleEvent:
         if self.close_time_utc <= self.open_time_utc:
             raise ValueError("Candle close time must be later than open time")
         if self.high < max(self.open, self.close, self.low):
