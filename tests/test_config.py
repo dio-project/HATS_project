@@ -1,12 +1,7 @@
-import os
-from pathlib import Path
-
-os.environ["HATS_DATABASE_URL"] = "sqlite://"
-
 import pytest
 from fastapi.testclient import TestClient
 from hats_api.main import app, store
-from hats_api.storage import ConfigStore, VersionConflict
+from hats_api.storage import ConfigStore
 
 client = TestClient(app)
 

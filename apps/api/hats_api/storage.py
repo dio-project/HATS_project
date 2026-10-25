@@ -6,7 +6,7 @@ import os
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator
+from collections.abc import Iterator
 
 from sqlalchemy import ForeignKey, Integer, String, Text, create_engine, delete, select
 from sqlalchemy.engine import Engine, make_url
