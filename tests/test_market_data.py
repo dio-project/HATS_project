@@ -65,7 +65,13 @@ def test_ingest_is_idempotent_and_conflicting_duplicate_is_not_overwritten():
     original = candle()
     first = service.ingest(original)
     duplicate = service.ingest(original)
-    conflict = service.ingest(candle(close="1.1005"))
+    conflict = service.ingest(
+        candle(
+            open_time=original.open_time_utc,
+            close_time=original.close_time_utc,
+            close="1.1005",
+        )
+    )
 
     assert first.status == "accepted"
     assert duplicate.status == "duplicate"
