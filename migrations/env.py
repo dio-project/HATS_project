@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 import os
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -19,6 +20,9 @@ if database_url.startswith("postgresql://"):
     database_url = database_url.replace(
         "postgresql://", "postgresql+psycopg://", 1
     )
+parsed_url = make_url(database_url)
+if parsed_url.get_backend_name() == "sqlite" and parsed_url.database not in {None, "", ":memory:"}:
+    Path(parsed_url.database).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
 config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 
