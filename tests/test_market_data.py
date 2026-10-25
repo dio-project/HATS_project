@@ -2,7 +2,6 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-
 from hats_api.main import app, store
 from hats_api.market_data import CandleEvent, MarketDataService
 from pydantic import ValidationError
