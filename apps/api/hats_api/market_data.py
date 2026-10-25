@@ -324,14 +324,17 @@ class MarketDataService:
                 }
             age = max(0.0, (utc_now() - datetime.fromisoformat(latest.close_time_utc)).total_seconds())
             stale = age > self.max_staleness_seconds
+            forming = not latest.is_closed
+            degraded = stale or forming or recent_errors is not None
             return {
-                "status": "degraded" if stale or recent_errors else "ok",
+                "status": "degraded" if degraded else "ok",
                 "latest_candle_at_utc": latest.close_time_utc,
                 "age_seconds": round(age, 3),
                 "max_staleness_seconds": self.max_staleness_seconds,
-                "trading_input_eligible": not stale and latest.is_closed and not recent_errors,
+                "trading_input_eligible": not stale and not forming and not recent_errors,
                 "reason": (
                     "Latest candle is stale." if stale else
+                    "Latest candle is still forming." if forming else
                     "A market-data quality error has been recorded." if recent_errors else
                     "Latest candle is closed and within the freshness threshold."
                 ),
