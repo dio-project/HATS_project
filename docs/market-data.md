@@ -60,7 +60,10 @@ that produced a candle, not a broker account.
   trading decisions. The freshness threshold is currently a service default, not a
   per-provider calibrated policy.
 - Malformed OHLC, naive timestamps, unsupported timeframes and unknown IANA zones are
-  rejected by request validation (HTTP 422).
+  rejected by request validation (HTTP 422). Candle close times more than 60 seconds
+  ahead of the API clock are rejected and recorded as a `future_timestamp` error.
+  That tolerance is a bootstrap default and must become provider-configurable after
+  clock synchronization and provider latency are measured.
 - Missing intervals are not fabricated. Detection of expected session gaps, exchange/FX
   holidays, feed clock skew and provider-specific revision policy remains future work.
 - `/api/market-data/health` is a preliminary health view, not yet a full per-symbol
