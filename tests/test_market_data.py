@@ -137,3 +137,19 @@ def test_market_data_api_rejects_naive_timestamp():
     payload["open_time_utc"] = "2026-01-01T10:00:00"
     response = client.post("/api/market-data/candles", json=payload)
     assert response.status_code == 422
+
+
+def test_future_dated_candle_is_rejected_and_recorded():
+    service = MarketDataService(store)
+    now = datetime.now(UTC)
+    candidate = candle(
+        open_time=now - timedelta(minutes=59),
+        close_time=now + timedelta(minutes=10),
+    )
+
+    result = service.ingest(candidate)
+
+    assert result.status == "rejected"
+    assert result.quality_events == ["future_timestamp"]
+    assert service.get_candles("EURUSD", "1h") == []
+    assert service.get_quality_events()[-1]["event_type"] == "future_timestamp"
