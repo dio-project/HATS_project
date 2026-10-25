@@ -1,12 +1,10 @@
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
-
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from hats_api.market_data import CandleEvent, MarketDataService
 from hats_api.main import app, store
+from hats_api.market_data import CandleEvent, MarketDataService
 
 
 client = TestClient(app)
@@ -30,7 +28,7 @@ def candle(
         high="1.1010",
         low="1.0980",
         close=close,
-        volume=Decimal("100"),
+        volume=100,
         is_closed=is_closed,
         source=source,
         source_timestamp="2026-10-25T12:00:00",
