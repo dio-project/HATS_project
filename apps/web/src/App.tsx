@@ -4,7 +4,7 @@ import { Activity, AlertTriangle, Bell, CheckCircle2, Clock3, Moon, Settings2, S
 
 type Rules = { enabled: boolean; confidence_threshold: number; rules: Record<string, unknown> };
 type Config = { schema_version:number; version:number; updated_at:string; layer1:Rules; layer2:Rules; layer3:Rules; layer4:{default_risk_pct:number;drawdown_throttle_risk_pct:number;daily_loss_limit_pct:number;rolling_equity_drawdown_trigger_pct:number;stop_loss_pips:number;take_profit_r_multiple:number;max_open_positions:number;max_total_risk_pct:number;daily_reset_timezone:string;execution_mode:string;limit_entry_expiry_seconds:number} };
-const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const API = import.meta.env.VITE_API_BASE_URL ?? "";
 const initial: Config = {schema_version:1,version:1,updated_at:new Date().toISOString(),layer1:{enabled:true,confidence_threshold:.6,rules:{regimes:["trend","range","high_volatility","uncertain"]}},layer2:{enabled:true,confidence_threshold:.6,rules:{phases:["expansion","retracement","consolidation","transition"]}},layer3:{enabled:true,confidence_threshold:.65,rules:{setups:["QML","FVG","CRT","SBI","SLR"],entry_order_type:"limit",market_order_fallback:false}},layer4:{default_risk_pct:1,drawdown_throttle_risk_pct:.5,daily_loss_limit_pct:2,rolling_equity_drawdown_trigger_pct:5,stop_loss_pips:20,take_profit_r_multiple:2,max_open_positions:3,max_total_risk_pct:2,daily_reset_timezone:"UTC",execution_mode:"paper",limit_entry_expiry_seconds:900}};
 const copy = <T,>(v:T):T => JSON.parse(JSON.stringify(v)) as T;
 export default function App(){
