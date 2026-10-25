@@ -26,12 +26,12 @@ In another terminal:
     npm install
     npm run dev
 
-Open port 5173. The API runs on port 8000. Run backend tests with python -m pytest; run lint with python -m ruff check apps/api tests; build the frontend with cd apps/web && npm run build.
+Open forwarded port 5173. The API runs on port 8000; Vite proxies API requests to it by default, which is compatible with Codespaces. Set VITE_API_BASE_URL only when the API is hosted at a separate base URL. Run backend tests with python -m pytest; run lint with python -m ruff check apps/api tests; build the frontend with cd apps/web && npm run build.
 
 By default, local development uses .hats/hats.db. Set HATS_DATABASE_URL to override the database URL. For PostgreSQL, install the project dependencies and set a URL such as postgresql+psycopg://user:password@host:5432/hats. Do not commit credentials or database files.
 
 The initial risk values (1% default trade risk, 0.5% drawdown throttle, 2% daily equity loss lockout, 5% rolling drawdown trigger) are provisional defaults, not validated trading recommendations. Codespaces is a development environment, not a live execution host.
 
-Market-data contract, provider interface, quality semantics and API endpoints are documented in docs/market-data.md. Current endpoints support canonical candle ingestion, candle retrieval, quality-event inspection and preliminary feed health; they are not yet wired to Layers 1–4. Do not expose the development ingestion endpoint publicly.
+Market-data contracts and quality semantics are documented in docs/market-data.md. The Broker & Data UI reads candle, health, and quality endpoints; Overview reads system status and backend time; configuration and audit views use their respective APIs. The endpoint-to-screen mapping is documented in docs/frontend-api.md. Market data is not yet wired to Layers 1–4. Do not expose development endpoints publicly.
 
-See docs/architecture.md, docs/time-semantics.md, docs/market-data.md, and docs/operations.md.
+See docs/architecture.md, docs/time-semantics.md, docs/market-data.md, docs/frontend-api.md, and docs/operations.md.
