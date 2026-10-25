@@ -11,11 +11,10 @@ from decimal import Decimal
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from hats_api.storage import Base, ConfigStore, utc_now
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from sqlalchemy import Boolean, Index, Integer, select, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
-
-from hats_api.storage import Base, ConfigStore, utc_now
 
 
 Timeframe = Literal["5m", "15m", "30m", "1h", "5h", "12h", "1d"]
