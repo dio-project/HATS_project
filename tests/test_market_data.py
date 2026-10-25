@@ -109,7 +109,10 @@ def test_closed_bar_and_health_status_are_explicit():
     result = service.ingest(candle(is_closed=False))
     assert result.status == "accepted"
     assert service.get_candles("EURUSD", "1h")[0]["is_closed"] is False
-    assert service.health()["trading_input_eligible"] is False
+    health = service.health()
+    assert health["trading_input_eligible"] is False
+    assert health["status"] == "degraded"
+    assert health["reason"] == "Latest candle is still forming."
 
 
 def test_market_data_api_ingests_lists_and_reports_health():
