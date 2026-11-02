@@ -86,7 +86,12 @@ market-data gate or Layer 4 risk authorization. It does not authorize orders.
   retrieves the latest persisted snapshot.
 
 These are development endpoints without authentication or authorization.
-They are not connected to Layers 1–4 or live execution.
+Computation is explicitly requested; candle ingestion does not synchronously
+run feature calculations. The next production step is a durable asynchronous
+worker that consumes persisted closed-candle events, checkpoints progress,
+and retries idempotently. This keeps provider ingestion isolated from feature
+calculation latency and failures. The endpoints are not connected to Layers
+1–4 or live execution.
 
 ## Failure semantics and remaining work
 
