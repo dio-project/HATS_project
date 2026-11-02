@@ -7,6 +7,12 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from hats_api.config import ConfirmRequest, DraftRequest
+from hats_api.features import (
+    FeatureError,
+    FeaturePipeline,
+    FeatureSnapshotConflict,
+    NoClosedCandles,
+)
 from hats_api.market_data import CandleEvent, MarketDataService
 from hats_api.storage import (
     ConfigStore,
@@ -15,7 +21,7 @@ from hats_api.storage import (
     VersionConflict,
 )
 
-app = FastAPI(title="HATS API", version="0.3.0")
+app = FastAPI(title="HATS API", version="0.4.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -27,6 +33,7 @@ app.add_middleware(
 store = ConfigStore()
 store.initialize()
 market_data = MarketDataService(store)
+feature_pipeline = FeaturePipeline(store)
 
 
 def utc_now():
@@ -169,6 +176,38 @@ def get_market_data_quality(limit: int = Query(default=100, ge=1, le=1000)):
 @app.get("/api/market-data/health")
 def get_market_data_health():
     return market_data.health()
+
+
+@app.post("/api/features/compute")
+def compute_latest_features(
+    symbol: str = Query(min_length=3, max_length=20),
+    timeframe: str = Query(pattern="^(5m|15m|30m|1h|5h|12h|1d)$"),
+    source: str = Query(min_length=1, max_length=100),
+    limit: int = Query(default=500, ge=1, le=5000),
+):
+    try:
+        result = feature_pipeline.compute_latest(symbol, timeframe, source, limit)
+        return result.model_dump(mode="json")
+    except NoClosedCandles as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FeatureSnapshotConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except FeatureError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/features/latest")
+def get_latest_features(
+    symbol: str = Query(min_length=3, max_length=20),
+    timeframe: str = Query(pattern="^(5m|15m|30m|1h|5h|12h|1d)$"),
+    source: str = Query(min_length=1, max_length=100),
+):
+    result = feature_pipeline.get_latest(symbol, timeframe, source)
+    if result is None:
+        raise HTTPException(status_code=404, detail="No feature snapshot exists for this source")
+    return result.model_dump(mode="json")
 
 
 @app.get("/api/system/status")
