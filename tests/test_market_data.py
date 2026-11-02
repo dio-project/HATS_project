@@ -83,6 +83,26 @@ def test_ingest_is_idempotent_and_conflicting_duplicate_is_not_overwritten():
     ]
 
 
+def test_duplicate_decimal_formatting_is_compared_numerically():
+    service = MarketDataService(store)
+    original = candle()
+    service.ingest(original)
+    payload = original.model_dump()
+    payload.update(
+        open=Decimal("1.099"),
+        high=Decimal("1.101"),
+        low=Decimal("1.098"),
+        close=Decimal("1.1"),
+        volume=Decimal("100.0"),
+    )
+    equivalent = CandleEvent.model_validate(payload)
+
+    result = service.ingest(equivalent)
+
+    assert result.status == "duplicate"
+    assert len(service.get_candles("EURUSD", "1h")) == 1
+
+
 def test_stale_and_out_of_order_bars_generate_quality_events():
     service = MarketDataService(store, max_staleness_seconds=30)
     now = datetime.now(UTC)
