@@ -281,6 +281,25 @@ class FeaturePipeline:
             if not candles:
                 raise NoClosedCandles("No closed candles are available for this source")
 
+                    for previous, current in zip(candles, candles[1:]):
+                previous_open = datetime.fromisoformat(previous.open_time_utc)
+                current_open = datetime.fromisoformat(current.open_time_utc)
+                previous_close = datetime.fromisoformat(previous.close_time_utc)
+                current_close = datetime.fromisoformat(current.close_time_utc)
+                if current_open <= previous_open or current_close <= previous_close:
+                    raise FeatureError("Stored candle timestamps are not strictly increasing")
+            for row in candles:
+                open_price = _decimal(row.open)
+                high_price = _decimal(row.high)
+                low_price = _decimal(row.low)
+                close_price = _decimal(row.close)
+                if min(open_price, high_price, low_price, close_price) <= 0:
+                    raise FeatureError("Stored candle prices must be positive")
+                if high_price < max(open_price, close_price, low_price):
+                    raise FeatureError("Stored candle high violates OHLC invariants")
+                if low_price > min(open_price, close_price, high_price):
+                    raise FeatureError("Stored candle low violates OHLC invariants")
+
             input_rows = [
                 {
                     "open": row.open,
@@ -401,6 +420,8 @@ class FeaturePipeline:
                 flags.append("insufficient_warmup")
             if age > self.max_staleness_seconds:
                 flags.append("stale_input")
+            if age < 0:
+                flags.append("future_input")
             snapshot_payload = json.loads(record.feature_json)
             snapshot = FeatureSnapshot(
                 schema_version=record.schema_version,
@@ -469,6 +490,8 @@ class FeaturePipeline:
                 flags.append("insufficient_warmup")
             if age > self.max_staleness_seconds:
                 flags.append("stale_input")
+            if age < 0:
+                flags.append("future_input")
             return FeatureComputationResult(
                 status="existing",
                 snapshot=snapshot,
