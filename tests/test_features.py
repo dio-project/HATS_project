@@ -5,7 +5,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from hats_api.features import (\n    FeatureError,\n    FeaturePipeline,\n    FeatureSnapshotConflict,\n    FeatureSnapshotRecord,\n    NoClosedCandles,\n)
+from hats_api.features import (
+    FeatureError,
+    FeaturePipeline,
+    FeatureSnapshotConflict,
+    FeatureSnapshotRecord,
+    NoClosedCandles,
+)
 from hats_api.main import app, store
 from hats_api.market_data import CandleEvent, MarketCandle, MarketDataService
 
