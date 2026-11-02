@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from hats_api.market_data import MarketDataService
@@ -35,7 +36,7 @@ def main() -> int:
     store.initialize()
     service = MarketDataService(store)
     report = CSVReplayAdapter(source=args.source).replay(args.csv_path, service)
-    print(json.dumps(report.__dict__, sort_keys=True))
+    print(json.dumps(asdict(report), sort_keys=True))
     return 0
 
 
