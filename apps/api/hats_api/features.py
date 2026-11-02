@@ -307,7 +307,13 @@ class FeaturePipeline:
                 current_close = datetime.fromisoformat(current.close_time_utc)
                 if current_open <= previous_open or current_close <= previous_close:
                     raise FeatureError("Stored candle timestamps are not strictly increasing")
+                if current_open < previous_close:
+                    raise FeatureError("Stored candle intervals overlap")
             for row in candles:
+                row_open = datetime.fromisoformat(row.open_time_utc)
+                row_close = datetime.fromisoformat(row.close_time_utc)
+                if row_close <= row_open:
+                    raise FeatureError("Stored candle close must follow its open")
                 open_price = _decimal(row.open)
                 high_price = _decimal(row.high)
                 low_price = _decimal(row.low)
