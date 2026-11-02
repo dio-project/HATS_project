@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime
+from itertools import pairwise
 from decimal import Decimal, DecimalException, InvalidOperation, localcontext
 from typing import Literal
 
@@ -170,7 +171,7 @@ def _wilder_average(values: list[Decimal], period: int) -> Decimal | None:
 def _rsi(closes: list[Decimal], period: int = 14) -> Decimal | None:
     if len(closes) <= period:
         return None
-    changes = [current - previous for previous, current in zip(closes, closes[1:])]
+    changes = [current - previous for previous, current in pairwise(closes)]
     gains = [max(change, Decimal(0)) for change in changes]
     losses = [max(-change, Decimal(0)) for change in changes]
     average_gain = _wilder_average(gains, period)
@@ -301,7 +302,7 @@ class FeaturePipeline:
             if not candles:
                 raise NoClosedCandles("No closed candles are available for this source")
 
-            for previous, current in zip(candles, candles[1:]):
+            for previous, current in pairwise(candles):
                 previous_open = datetime.fromisoformat(previous.open_time_utc)
                 current_open = datetime.fromisoformat(current.open_time_utc)
                 previous_close = datetime.fromisoformat(previous.close_time_utc)
