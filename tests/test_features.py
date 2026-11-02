@@ -115,6 +115,39 @@ def test_warmup_is_explicit_and_missing_source_fails_closed():
         pipeline.compute_latest("EURUSD", "1h", "unknown-provider")
 
 
+def test_stale_feature_window_is_not_eligible():
+    build_candles()
+    result = FeaturePipeline(store, max_staleness_seconds=1).compute_latest(
+        "EURUSD", "1h", "feature-test"
+    )
+
+    assert result.feature_input_eligible is False
+    assert "stale_input" in result.quality_flags
+
+
+def test_future_closed_candle_is_not_eligible():
+    candles = build_candles()
+    now = datetime.now(UTC)
+    future_bar = CandleEvent(
+        symbol="EURUSD",
+        timeframe="1h",
+        open_time_utc=now - timedelta(minutes=59, seconds=30),
+        close_time_utc=now + timedelta(seconds=30),
+        open=candles[-1].close,
+        high=candles[-1].close + Decimal("0.00030"),
+        low=candles[-1].close - Decimal("0.00030"),
+        close=candles[-1].close + Decimal("0.00010"),
+        is_closed=True,
+        source="feature-test",
+    )
+    MarketDataService(store).ingest(future_bar)
+
+    result = FeaturePipeline(store).compute_latest("EURUSD", "1h", "feature-test")
+
+    assert result.feature_input_eligible is False
+    assert "future_input" in result.quality_flags
+
+
 def test_flat_market_has_finite_zero_range_features():
     build_candles(60, flat=True)
     result = FeaturePipeline(store).compute_latest("EURUSD", "1h", "feature-test")
