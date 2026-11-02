@@ -46,12 +46,17 @@ not guessed; provider-specific FX calendar semantics remain a separate task.
 
 ## Warm-up and eligibility
 
-The calculation uses a fixed maximum lookback of 500 closed bars and a shared warm-up threshold of 50 closed bars. The lookback is fixed rather than caller-selectable so the same immutable input key cannot silently produce different feature values because a request used a different history length. Before that threshold,
-available short-window features may be returned, but the snapshot is marked
-`insufficient_warmup` and is not eligible as a feature input. A stale latest
-closed candle is similarly marked `stale_input`. Historical snapshots can
-still be generated for offline research, but these flags must be respected by
-any downstream live pipeline.
+The calculation uses a fixed maximum lookback of 500 closed bars and a shared warm-up threshold of 50 closed bars. The lookback is fixed rather than caller-selectable so the same immutable input key cannot silently produce different feature values because a request used a different history length. Before that threshold, available short-window features may be returned, but
+the snapshot is marked `insufficient_warmup` and is not eligible as a feature
+input. Freshness uses provisional timeframe-specific limits: 15m for 5m bars,
+45m for 15m, 90m for 30m, 3h for 1h, 15h for 5h, 36h for 12h, and 72h for 1d.
+A stale latest closed candle is marked `stale_input`; a candle whose close
+timestamp is still in the future is marked `future_input`. These wall-clock
+limits are bootstrap values, not a session calendar. Provider-specific trading
+sessions, holidays, weekend reopen, and feed outages must be distinguished
+before live eligibility is enabled. Historical snapshots can still be
+generated for offline research, but these flags must be respected by any
+downstream live pipeline.
 
 This is a preliminary feature-input eligibility check, not a complete
 market-data gate or Layer 4 risk authorization. It does not authorize orders.
@@ -67,8 +72,10 @@ market-data gate or Layer 4 risk authorization. It does not authorize orders.
   overwriting the stored snapshot.
 - A changed feature definition requires a new feature-set version. Do not
   reinterpret historical snapshots in place.
-- Snapshots are persisted separately from raw candles and include an input
-  count, digest, and computation timestamp.
+- Snapshots are persisted separately from raw candles and include the input
+  window start, input count, SHA-256 digest of ordered source-candle payloads,
+  separate feature-output digest, and computation timestamp. A changed source
+  history under the same snapshot identity is a conflict, not an overwrite.
 
 ## API
 
