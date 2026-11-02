@@ -16,7 +16,10 @@ def clean_store():
     store.reset_for_tests()
 
 
-def build_candles(count: int = 60, *, source: str = "feature-test", flat: bool = False):
+def build_candles(
+    count: int = 60, *, source: str = "feature-test", flat: bool = False,
+    last_closed: bool = True,
+):
     now = datetime.now(UTC)
     market_data = MarketDataService(store)
     candles = []
@@ -42,7 +45,7 @@ def build_candles(count: int = 60, *, source: str = "feature-test", flat: bool =
             low=low,
             close=close_price,
             volume=None,
-            is_closed=True,
+            is_closed=last_closed or index < count - 1,
             source=source,
         )
         market_data.ingest(candle)
@@ -69,7 +72,7 @@ def test_feature_pipeline_computes_shared_features_and_layer_views():
         "layer2_phase",
         "layer3_entry",
     }
-    assert result.snapshot.layer_views["layer1_environment"]["rsi_14"] is None
+    assert "rsi_14" not in result.snapshot.layer_views["layer1_environment"]
     assert result.snapshot.layer_views["layer3_entry"]["atr_14"] is not None
     assert result.trading_input_eligible is True
 
@@ -89,10 +92,7 @@ def test_feature_snapshot_is_idempotent_and_persisted():
 
 
 def test_forming_candles_are_excluded_from_feature_inputs():
-    candles = build_candles(60)
-    forming = candles[-1].model_copy(update={"is_closed": False})
-    market_data = MarketDataService(store)
-    market_data.ingest(forming)
+    candles = build_candles(60, last_closed=False)
 
     result = FeaturePipeline(store).compute_latest("EURUSD", "1h", "feature-test")
 
