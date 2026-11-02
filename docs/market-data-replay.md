@@ -30,10 +30,18 @@ constructing canonical candles.
 
 ## Run a replay
 
-From the repository root, after installing the project and applying migrations:
+From the repository root, after installing the project and applying migrations, generate a recent synthetic sample and replay it:
 
 ```bash
-python -m hats_api.replay_cli ./data/eurusd_1h.csv --source historical-csv
+python scripts/generate_replay_sample.py
+python -m hats_api.replay_cli ./examples/data/eurusd_1h.csv --source synthetic-sample
+```
+
+The generator creates closed hourly bars ending at the most recently completed UTC hour, so the sample remains within the default freshness window. Its prices are deterministic synthetic values for UI and pipeline testing only; they are not historical or live EURUSD prices. You can change the output path and bar count, for example:
+
+```bash
+python scripts/generate_replay_sample.py ./data/eurusd.csv --bars 48
+python -m hats_api.replay_cli ./data/eurusd.csv --source synthetic-sample
 ```
 
 The CLI uses `HATS_DATABASE_URL` or `DATABASE_URL` when configured; otherwise
