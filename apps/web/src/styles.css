@@ -1830,3 +1830,5 @@ footer {
         grid-template-columns: minmax(0, 1fr)
     }
 }
+
+.candle-chart-panel{margin:14px 0;padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--panel);min-width:0}.candle-chart{width:100%;height:390px}.candle-chart-heading{display:flex;justify-content:space-between;margin-bottom:8px}.candle-ohlc{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;font:10px 'DM Mono',monospace}.chart-source-control{display:flex;justify-content:flex-end;margin-bottom:10px}@media(max-width:700px){.candle-chart{height:310px}.nav{position:relative}.nav::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);z-index:1000;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--text);font-size:11px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none}.nav:hover::after,.nav:focus-visible::after{opacity:1;visibility:visible}}
