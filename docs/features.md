@@ -99,8 +99,11 @@ calculation latency and failures. The endpoints are not connected to Layers
 No closed candles returns a typed error. Missing sources do not fall back to a
 different provider. Forming candles are excluded. Future-dated closes, invalid
 or overlapping stored intervals, corrupted OHLC values, and non-finite
-arithmetic are rejected before a snapshot can be persisted. Persistence is protected by a unique input key and digest check;
-concurrent duplicate computations resolve to the existing identical snapshot.
+arithmetic are rejected before a snapshot can be persisted. A legacy snapshot
+without input-window provenance is marked `provenance_missing` and is not
+eligible as a feature input. Persistence is protected by a unique input key
+and separate input/output digest checks; concurrent duplicate computations
+resolve to the existing identical snapshot.
 
 Before production use, add provider-specific gap/session calendars, revision
 and correction handling, full data-lineage references, feature backfill
