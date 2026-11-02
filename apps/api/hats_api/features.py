@@ -9,11 +9,12 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal, InvalidOperation, localcontext
+from decimal import Decimal, localcontext
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Index, Integer, String, Text, UniqueConstraint, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column
 
 from hats_api.market_data import MarketCandle
@@ -317,7 +318,7 @@ class FeaturePipeline:
                 record = existing
                 status = "existing"
             else:
-                record = FeatureSnapshotRecord(
+                candidate = FeatureSnapshotRecord(
                     schema_version=FEATURE_SCHEMA_VERSION,
                     feature_set_version=FEATURE_SET_VERSION,
                     symbol=normalized_symbol,
@@ -330,8 +331,29 @@ class FeaturePipeline:
                     feature_digest=digest,
                     computed_at_utc=utc_now().isoformat(),
                 )
-                session.add(record)
-                session.flush()
+                try:
+                    with session.begin_nested():
+                        session.add(candidate)
+                        session.flush()
+                    record = candidate
+                except IntegrityError:
+                    # Another worker may have committed the same deterministic snapshot.
+                    record = session.scalar(
+                        select(FeatureSnapshotRecord).where(
+                            FeatureSnapshotRecord.symbol == normalized_symbol,
+                            FeatureSnapshotRecord.timeframe == timeframe,
+                            FeatureSnapshotRecord.source == normalized_source,
+                            FeatureSnapshotRecord.candle_close_time_utc == latest.close_time_utc,
+                            FeatureSnapshotRecord.feature_set_version == FEATURE_SET_VERSION,
+                        )
+                    )
+                    if record is None:
+                        raise
+                    if record.feature_digest != digest or record.feature_json != serialized:
+                        raise FeatureSnapshotConflict(
+                            "Concurrent computation produced a different immutable snapshot"
+                        )
+                    status = "existing"
 
             now = utc_now()
             close_time = datetime.fromisoformat(latest.close_time_utc)
