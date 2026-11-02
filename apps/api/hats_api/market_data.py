@@ -52,12 +52,25 @@ class CandleEvent(BaseModel):
     @field_validator("symbol")
     @classmethod
     def normalize_symbol(cls, value: str) -> str:
-        return value.strip().upper()
+        normalized = value.strip().upper()
+        if not normalized:
+            raise ValueError("Symbol must not be empty")
+        return normalized
 
     @field_validator("source")
     @classmethod
     def normalize_source(cls, value: str) -> str:
-        return value.strip()
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Source must not be empty")
+        return normalized
+
+    @field_validator("open", "high", "low", "close", "volume")
+    @classmethod
+    def require_finite_numeric_values(cls, value: Decimal | None) -> Decimal | None:
+        if value is not None and not value.is_finite():
+            raise ValueError("OHLC and volume values must be finite decimals")
+        return value
 
     @field_validator("open_time_utc", "close_time_utc")
     @classmethod
