@@ -418,6 +418,8 @@ class FeaturePipeline:
             flags: list[str] = []
             if len(candles) < MINIMUM_WARMUP_BARS:
                 flags.append("insufficient_warmup")
+            if not record.input_digest or not record.input_window_start_utc:
+                flags.append("provenance_missing")
             if age > self.max_staleness_seconds:
                 flags.append("stale_input")
             if age < 0:
@@ -488,6 +490,8 @@ class FeaturePipeline:
             flags: list[str] = []
             if snapshot.input_count < MINIMUM_WARMUP_BARS:
                 flags.append("insufficient_warmup")
+            if not snapshot.input_digest or not snapshot.input_window_start_utc:
+                flags.append("provenance_missing")
             if age > self.max_staleness_seconds:
                 flags.append("stale_input")
             if age < 0:
