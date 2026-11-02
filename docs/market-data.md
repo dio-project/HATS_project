@@ -87,4 +87,4 @@ authorization. Do not expose them publicly or connect them to live execution.
 2. Add per-symbol/timeframe freshness and clock-skew monitoring.
 3. Specify missing-bar/session calendars and candle correction/revision rules.
 4. Add provider contract tests, historical backfill, and higher-timeframe aggregation.
-5. Gate Layer 1 inputs on a durable, per-symbol market-data eligibility decision.
+5. Gate Layer 1 inputs on a durable, per-symbol market-data eligibility decision.\n6. Compute the shared, versioned feature snapshots described in docs/features.md.
