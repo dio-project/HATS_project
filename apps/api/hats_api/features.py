@@ -281,7 +281,7 @@ class FeaturePipeline:
             if not candles:
                 raise NoClosedCandles("No closed candles are available for this source")
 
-                    for previous, current in zip(candles, candles[1:]):
+            for previous, current in zip(candles, candles[1:]):
                 previous_open = datetime.fromisoformat(previous.open_time_utc)
                 current_open = datetime.fromisoformat(current.open_time_utc)
                 previous_close = datetime.fromisoformat(previous.close_time_utc)
