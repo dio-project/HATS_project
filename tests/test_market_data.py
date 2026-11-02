@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
@@ -138,6 +139,13 @@ def test_market_data_api_rejects_naive_timestamp():
     payload["open_time_utc"] = "2026-01-01T10:00:00"
     response = client.post("/api/market-data/candles", json=payload)
     assert response.status_code == 422
+
+
+def test_non_finite_ohlc_values_are_rejected():
+    payload = candle().model_dump()
+    payload["open"] = Decimal("Infinity")
+    with pytest.raises(ValidationError, match="finite decimals"):
+        CandleEvent.model_validate(payload)
 
 
 def test_future_dated_candle_is_rejected_and_recorded():
