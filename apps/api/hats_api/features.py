@@ -24,6 +24,15 @@ FEATURE_SET_VERSION = "core-v1"
 FEATURE_SCHEMA_VERSION = 1
 MINIMUM_WARMUP_BARS = 50
 FEATURE_LOOKBACK_BARS = 500
+DEFAULT_MAX_STALENESS_SECONDS = {
+    "5m": 15 * 60,
+    "15m": 45 * 60,
+    "30m": 90 * 60,
+    "1h": 3 * 60 * 60,
+    "5h": 15 * 60 * 60,
+    "12h": 36 * 60 * 60,
+    "1d": 72 * 60 * 60,
+}
 
 LAYER_FEATURES: dict[str, tuple[str, ...]] = {
     "layer1_environment": (
@@ -251,12 +260,22 @@ def _calculate_features(candles: list[dict]) -> dict[str, str | None]:
 class FeaturePipeline:
     """Compute and persist immutable, source-specific feature snapshots."""
 
-    def __init__(self, store: ConfigStore, max_staleness_seconds: int = 7200) -> None:
-        if max_staleness_seconds < 1:
+    def __init__(
+        self, store: ConfigStore, max_staleness_seconds: int | None = None
+    ) -> None:
+        if max_staleness_seconds is not None and max_staleness_seconds < 1:
             raise ValueError("max_staleness_seconds must be positive")
         self.store = store
         self.max_staleness_seconds = max_staleness_seconds
         Base.metadata.create_all(self.store.engine)
+
+    def _staleness_limit(self, timeframe: str) -> int:
+        if self.max_staleness_seconds is not None:
+            return self.max_staleness_seconds
+        try:
+            return DEFAULT_MAX_STALENESS_SECONDS[timeframe]
+        except KeyError as exc:
+            raise ValueError(f"Unsupported timeframe: {timeframe}") from exc
 
     def compute_latest(
         self, symbol: str, timeframe: str, source: str
@@ -420,7 +439,7 @@ class FeaturePipeline:
                 flags.append("insufficient_warmup")
             if not record.input_digest or not record.input_window_start_utc:
                 flags.append("provenance_missing")
-            if age > self.max_staleness_seconds:
+            if age > self._staleness_limit(timeframe):
                 flags.append("stale_input")
             if age < 0:
                 flags.append("future_input")
@@ -492,7 +511,7 @@ class FeaturePipeline:
                 flags.append("insufficient_warmup")
             if not snapshot.input_digest or not snapshot.input_window_start_utc:
                 flags.append("provenance_missing")
-            if age > self.max_staleness_seconds:
+            if age > self._staleness_limit(timeframe):
                 flags.append("stale_input")
             if age < 0:
                 flags.append("future_input")
