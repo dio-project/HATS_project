@@ -133,17 +133,16 @@ def test_stale_feature_window_is_not_eligible():
 
 
 def test_future_closed_candle_is_not_eligible():
-    candles = build_candles()
     now = datetime.now(UTC)
     future_bar = CandleEvent(
         symbol="EURUSD",
         timeframe="1h",
-        open_time_utc=now - timedelta(minutes=59, seconds=30),
+        open_time_utc=now - timedelta(minutes=30),
         close_time_utc=now + timedelta(seconds=30),
-        open=candles[-1].close,
-        high=candles[-1].close + Decimal("0.00030"),
-        low=candles[-1].close - Decimal("0.00030"),
-        close=candles[-1].close + Decimal("0.00010"),
+        open="1.1000",
+        high="1.1003",
+        low="1.0997",
+        close="1.1001",
         is_closed=True,
         source="feature-test",
     )
