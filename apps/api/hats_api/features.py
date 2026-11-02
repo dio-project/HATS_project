@@ -309,6 +309,13 @@ class FeaturePipeline:
                     raise FeatureError("Stored candle timestamps are not strictly increasing")
                 if current_open < previous_close:
                     raise FeatureError("Stored candle intervals overlap")
+            latest = candles[-1]
+            now = utc_now()
+            close_time = datetime.fromisoformat(latest.close_time_utc)
+            age = (now - close_time).total_seconds()
+            if age < 0:
+                raise FeatureError("Latest closed candle has a future close timestamp")
+
             for row in candles:
                 row_open = datetime.fromisoformat(row.open_time_utc)
                 row_close = datetime.fromisoformat(row.close_time_utc)
@@ -342,7 +349,6 @@ class FeaturePipeline:
                 layer: {name: features[name] for name in names}
                 for layer, names in LAYER_FEATURES.items()
             }
-            latest = candles[-1]
             stable_payload = {
                 "features": features,
                 "layer_views": layer_views,
@@ -437,9 +443,6 @@ class FeaturePipeline:
                         )
                     status = "existing"
 
-            now = utc_now()
-            close_time = datetime.fromisoformat(latest.close_time_utc)
-            age = (now - close_time).total_seconds()
             flags: list[str] = []
             if len(candles) < MINIMUM_WARMUP_BARS:
                 flags.append("insufficient_warmup")
@@ -447,8 +450,6 @@ class FeaturePipeline:
                 flags.append("provenance_missing")
             if age > self._staleness_limit(timeframe):
                 flags.append("stale_input")
-            if age < 0:
-                flags.append("future_input")
             snapshot_payload = json.loads(record.feature_json)
             snapshot = FeatureSnapshot(
                 schema_version=record.schema_version,
