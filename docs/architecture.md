@@ -21,3 +21,5 @@ Planned boundaries: apps/web (control plane), apps/api (configuration/orchestrat
 
 ## Feature pipeline
 The shared feature pipeline consumes source-specific, closed canonical candles and persists immutable, versioned snapshots. Layer 1, Layer 2, and Layer 3 receive separate projections over the same deterministic core calculations. Feature availability is not a strategy decision or risk authorization. A model adapter must validate feature-set version, warm-up, freshness, nullability, and training/serving compatibility before inference. Layer 4 remains isolated from feature calculations and retains absolute veto authority.
+
+Feature computation is currently an explicit development API operation, not an automatic ingestion side effect. Production should use a durable event/outbox or equivalent replayable work queue and an idempotent feature worker; ingestion must not depend on model/feature latency. Worker restart, duplicate delivery, poison messages, backpressure, and dead-letter recovery require explicit operational policies before live use.
