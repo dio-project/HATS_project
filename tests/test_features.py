@@ -74,7 +74,7 @@ def test_feature_pipeline_computes_shared_features_and_layer_views():
     }
     assert "rsi_14" not in result.snapshot.layer_views["layer1_environment"]
     assert result.snapshot.layer_views["layer3_entry"]["atr_14"] is not None
-    assert result.trading_input_eligible is True
+    assert result.feature_input_eligible is True
 
 
 def test_feature_snapshot_is_idempotent_and_persisted():
@@ -105,7 +105,7 @@ def test_warmup_is_explicit_and_missing_source_fails_closed():
     pipeline = FeaturePipeline(store)
     result = pipeline.compute_latest("EURUSD", "1h", "feature-test")
 
-    assert result.trading_input_eligible is False
+    assert result.feature_input_eligible is False
     assert "insufficient_warmup" in result.quality_flags
     assert result.snapshot.features["ema_50"] is None
     with pytest.raises(NoClosedCandles):
