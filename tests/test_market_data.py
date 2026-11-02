@@ -164,8 +164,13 @@ def test_market_data_api_rejects_naive_timestamp():
 def test_non_finite_ohlc_values_are_rejected():
     payload = candle().model_dump()
     payload["open"] = Decimal("Infinity")
-    with pytest.raises(ValidationError, match="finite decimals"):
+    with pytest.raises(ValidationError) as exc_info:
         CandleEvent.model_validate(payload)
+
+    assert any(
+        error["loc"] == ("open",) and error["type"] == "finite_number"
+        for error in exc_info.value.errors()
+    )
 
 
 def test_future_dated_candle_is_rejected_and_recorded():
