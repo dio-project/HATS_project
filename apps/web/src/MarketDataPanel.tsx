@@ -127,6 +127,7 @@ export default function MarketDataPanel({ apiBaseUrl, dark }: Props) {
 
   const qualityErrors = events.filter((event) => event.severity === "error").length;
   const sources = [...new Set(candles.map((candle) => candle.source))].sort();
+  const activeChartSource = chartSource === "all" || sources.includes(chartSource) ? chartSource : "all";
   const healthClass = health?.status === "ok" ? "good" : health?.status === "degraded" ? "warning" : "muted";
 
   return (
@@ -186,13 +187,13 @@ export default function MarketDataPanel({ apiBaseUrl, dark }: Props) {
         </div>
         {candles.length > 0 && (
           <div className="chart-source-control">
-            <label><span>Chart data source</span><select value={chartSource} onChange={(event) => setChartSource(event.target.value)}>
+            <label><span>Chart data source</span><select value={activeChartSource} onChange={(event) => setChartSource(event.target.value)}>
               <option value="all">All sources (deduplicated by candle time)</option>
               {sources.map((item) => <option key={item} value={item}>{item}</option>)}
             </select></label>
           </div>
         )}
-        {candles.length > 0 && <CandlestickChart candles={candles} source={chartSource} dark={dark} />}
+        {candles.length > 0 && <CandlestickChart candles={candles} source={activeChartSource} dark={dark} />}
         {candles.length === 0 ? (
           <div className="market-empty"><WifiOff /><b>No candles returned for {symbol} · {timeframe}</b><p>Once a provider adapter or test client ingests canonical candles, they will appear here.</p></div>
         ) : (
