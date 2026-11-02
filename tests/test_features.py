@@ -148,10 +148,10 @@ def test_future_closed_candle_is_not_eligible():
     )
     MarketDataService(store).ingest(future_bar)
 
-    result = FeaturePipeline(store).compute_latest("EURUSD", "1h", "feature-test")
-
-    assert result.feature_input_eligible is False
-    assert "future_input" in result.quality_flags
+    pipeline = FeaturePipeline(store)
+    with pytest.raises(FeatureError, match="future close timestamp"):
+        pipeline.compute_latest("EURUSD", "1h", "feature-test")
+    assert pipeline.get_latest("EURUSD", "1h", "feature-test") is None
 
 
 def test_flat_market_has_finite_zero_range_features():
