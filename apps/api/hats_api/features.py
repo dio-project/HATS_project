@@ -509,6 +509,7 @@ class FeaturePipeline:
                     if record.input_window_start_utc else None
                 ),
                 input_digest=record.input_digest,
+                feature_digest=record.feature_digest,
                 computed_at_utc=datetime.fromisoformat(record.computed_at_utc),
                 input_count=record.input_count,
                 features=payload["features"],
