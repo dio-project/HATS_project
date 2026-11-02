@@ -31,6 +31,10 @@ This repository is not live-trading capable. Required gates include authenticati
 Test duplicate submissions, partial fills, unknown order status after timeout, reconnect and restart, stale/out-of-order bars, DST transitions, weekends/session boundaries, spread widening, price gaps, daily-loss and drawdown breaches, and rejected protective orders. Never commit secrets or production environment files.
 
 
+## Deterministic market-data replay
+
+Use the offline CSV replay adapter to exercise candle normalization and persistence before selecting a live provider. Input schema, strict timestamp requirements, CLI usage, idempotency, and partial-import failure semantics are documented in `docs/market-data-replay.md`. Replay never enables trading or submits broker orders.
+
 ## Frontend API integration
 
 The Overview displays backend-reported system status and clock values. Broker & Data displays persisted candles, global market-data health, and quality events from the backend API. Configuration and audit screens use the configuration/history/audit endpoints. See `docs/frontend-api.md` for the route-to-screen map and the limitations of the preliminary market-data health flag.
