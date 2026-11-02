@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -189,16 +189,18 @@ class MarketDataService:
                 )
             )
             if existing is not None:
-                incoming = candle.model_dump(mode="json")
-                comparable = {
-                    "open": existing.open, "high": existing.high, "low": existing.low,
-                    "close": existing.close, "volume": existing.volume,
-                    "is_closed": existing.is_closed,
-                }
-                same = all(
-                    str(incoming[key]) == (str(value) if value is not None else None)
-                    for key, value in comparable.items()
-                )
+                try:
+                    same_prices = all(
+                        (
+                            getattr(candle, key) == Decimal(getattr(existing, key))
+                            if getattr(existing, key) is not None
+                            else getattr(candle, key) is None
+                        )
+                        for key in ("open", "high", "low", "close", "volume")
+                    )
+                except InvalidOperation:
+                    same_prices = False
+                same = same_prices and existing.is_closed == candle.is_closed
                 event_type = "duplicate_candle" if same else "duplicate_conflict"
                 self._quality(
                     session, candle, event_type, "info" if same else "error",
