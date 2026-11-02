@@ -89,6 +89,9 @@ def test_feature_snapshot_is_idempotent_and_persisted():
     assert loaded is not None
     assert loaded.snapshot.features == first.snapshot.features
     assert loaded.snapshot.candle_close_time_utc == first.snapshot.candle_close_time_utc
+    assert loaded.snapshot.input_window_start_utc is not None
+    assert loaded.snapshot.input_digest is not None
+    assert len(loaded.snapshot.input_digest) == 64
 
 
 def test_forming_candles_are_excluded_from_feature_inputs():
