@@ -3,10 +3,11 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
-from hats_api.features import FeaturePipeline, NoClosedCandles
+from hats_api.features import (\n    FeatureError,\n    FeaturePipeline,\n    FeatureSnapshotConflict,\n    FeatureSnapshotRecord,\n    NoClosedCandles,\n)
 from hats_api.main import app, store
-from hats_api.market_data import CandleEvent, MarketDataService
+from hats_api.market_data import CandleEvent, MarketCandle, MarketDataService
 
 client = TestClient(app)
 
@@ -161,6 +162,29 @@ def test_flat_market_has_finite_zero_range_features():
         value is None or Decimal(value).is_finite()
         for value in result.snapshot.features.values()
     )
+
+
+def test_existing_snapshot_conflict_is_not_overwritten():
+    build_candles()
+    pipeline = FeaturePipeline(store)
+    pipeline.compute_latest("EURUSD", "1h", "feature-test")
+    with store.session() as session:
+        record = session.scalar(select(FeatureSnapshotRecord))
+        record.feature_json = "{}"
+        record.feature_digest = "0" * 64
+
+    with pytest.raises(FeatureSnapshotConflict):
+        pipeline.compute_latest("EURUSD", "1h", "feature-test")
+
+
+def test_corrupt_persisted_ohlc_fails_feature_computation():
+    build_candles()
+    with store.session() as session:
+        row = session.scalar(select(MarketCandle).order_by(MarketCandle.open_time_utc))
+        row.high = "0.5"
+
+    with pytest.raises(FeatureError, match="high violates OHLC"):
+        FeaturePipeline(store).compute_latest("EURUSD", "1h", "feature-test")
 
 
 def test_feature_api_computes_and_returns_latest_snapshot():
