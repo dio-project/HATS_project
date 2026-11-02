@@ -79,7 +79,7 @@ export default function MarketDataPanel({ apiBaseUrl, dark }: Props) {
   const [events, setEvents] = useState<QualityEvent[]>([]);
   const [symbol, setSymbol] = useState("EURUSD");
   const [timeframe, setTimeframe] = useState("1h");
-  const [chartSource, setChartSource] = useState("all");
+  const [chartSource, setChartSource] = useState("");
   const [limit, setLimit] = useState("100");
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
@@ -127,7 +127,7 @@ export default function MarketDataPanel({ apiBaseUrl, dark }: Props) {
 
   const qualityErrors = events.filter((event) => event.severity === "error").length;
   const sources = [...new Set(candles.map((candle) => candle.source))].sort();
-  const activeChartSource = chartSource === "all" || sources.includes(chartSource) ? chartSource : "all";
+  const activeChartSource = sources.includes(chartSource) ? chartSource : (sources[0] ?? "");
   const healthClass = health?.status === "ok" ? "good" : health?.status === "degraded" ? "warning" : "muted";
 
   return (
@@ -188,7 +188,7 @@ export default function MarketDataPanel({ apiBaseUrl, dark }: Props) {
         {candles.length > 0 && (
           <div className="chart-source-control">
             <label><span>Chart data source</span><select value={activeChartSource} onChange={(event) => setChartSource(event.target.value)}>
-              <option value="all">All sources (deduplicated by candle time)</option>
+              
               {sources.map((item) => <option key={item} value={item}>{item}</option>)}
             </select></label>
           </div>
