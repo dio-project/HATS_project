@@ -59,7 +59,7 @@ that produced a candle, not a broker account.
   quality events. Their presence must not be interpreted as permission to use them for
   trading decisions. The freshness threshold is currently a service default, not a
   per-provider calibrated policy.
-- Malformed OHLC, naive timestamps, unsupported timeframes and unknown IANA zones are
+- Malformed, non-finite or non-positive OHLC, naive timestamps, unsupported timeframes and unknown IANA zones are
   rejected by request validation (HTTP 422). Candle close times more than 60 seconds
   ahead of the API clock are rejected and recorded as a `future_timestamp` error.
   That tolerance is a bootstrap default and must become provider-configurable after
