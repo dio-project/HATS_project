@@ -111,7 +111,7 @@ class FeatureSnapshot(BaseModel):
 class FeatureComputationResult(BaseModel):
     status: Literal["computed", "existing"]
     snapshot: FeatureSnapshot
-    feature_input_eligible: bool
+    feature_window_ready: bool
     quality_flags: list[str]
 
 
@@ -474,7 +474,7 @@ class FeaturePipeline:
             return FeatureComputationResult(
                 status=status,
                 snapshot=snapshot,
-                feature_input_eligible=not flags,
+                feature_window_ready=not flags,
                 quality_flags=flags,
             )
 
@@ -528,6 +528,6 @@ class FeaturePipeline:
             return FeatureComputationResult(
                 status="existing",
                 snapshot=snapshot,
-                feature_input_eligible=not flags,
+                feature_window_ready=not flags,
                 quality_flags=flags,
             )
