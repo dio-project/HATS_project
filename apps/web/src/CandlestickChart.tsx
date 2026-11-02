@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CandlestickSeries, ColorType, createChart, CrosshairMode, type CandlestickData, type Time } from "lightweight-charts";
+import { CandlestickSeries, ColorType, createChart, CrosshairMode, type CandlestickData, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 
 type Candle = { open_time_utc: string; open: string; high: string; low: string; close: string; source: string };
 type Props = { candles: Candle[]; source: string; dark: boolean };
@@ -8,8 +8,8 @@ const price = (value: number) => value.toFixed(5);
 
 export default function CandlestickChart({ candles, source, dark }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
-  const seriesRef = useRef<ReturnType<ReturnType<typeof createChart>["addSeries"]> | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const [hover, setHover] = useState<Ohlc | null>(null);
   const data = useMemo(() => {
     const rows = new Map<number, CandlestickData<Time>>();
