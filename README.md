@@ -34,4 +34,4 @@ The initial risk values (1% default trade risk, 0.5% drawdown throttle, 2% daily
 
 Market-data contracts and quality semantics are documented in docs/market-data.md. The Broker & Data UI reads candle, health, and quality endpoints; Overview reads system status and backend time; configuration and audit views use their respective APIs. The endpoint-to-screen mapping is documented in docs/frontend-api.md. Market data is not yet wired to Layers 1–4. Do not expose development endpoints publicly.
 
-See docs/architecture.md, docs/time-semantics.md, docs/market-data.md, docs/frontend-api.md, and docs/operations.md.
+See docs/architecture.md, docs/time-semantics.md, docs/market-data.md, docs/features.md, docs/frontend-api.md, and docs/operations.md.
