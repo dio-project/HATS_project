@@ -59,8 +59,12 @@ reopen, and feed outages must be distinguished before live eligibility is
 enabled. Historical snapshots can still be generated for offline research,
 but these flags must be respected by any downstream live pipeline.
 
-This is a preliminary feature-input eligibility check, not a complete
-market-data gate or Layer 4 risk authorization. It does not authorize orders.
+The API's `feature_window_ready` flag only reports that the basic
+warm-up, wall-clock freshness, and provenance checks passed. It does not
+validate provider session gaps, feed quality history, symbol trading status,
+or model-specific nullability and schema compatibility. It is not a model
+input authorization, a market-data gate, or Layer 4 risk authorization, and
+it never authorizes orders.
 
 ## Versioning and persistence
 
