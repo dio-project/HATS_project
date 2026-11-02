@@ -23,7 +23,7 @@ from hats_api.storage import Base, ConfigStore, utc_now
 FEATURE_SET_VERSION = "core-v1"
 FEATURE_SCHEMA_VERSION = 1
 MINIMUM_WARMUP_BARS = 50
-MAX_INPUT_BARS = 5000
+FEATURE_LOOKBACK_BARS = 500
 
 LAYER_FEATURES: dict[str, tuple[str, ...]] = {
     "layer1_environment": (
@@ -255,15 +255,12 @@ class FeaturePipeline:
         Base.metadata.create_all(self.store.engine)
 
     def compute_latest(
-        self, symbol: str, timeframe: str, source: str, limit: int = 500
+        self, symbol: str, timeframe: str, source: str
     ) -> FeatureComputationResult:
         normalized_symbol = symbol.strip().upper()
         normalized_source = source.strip()
         if not normalized_symbol or not normalized_source:
             raise ValueError("symbol and source must not be empty")
-        if not 1 <= limit <= MAX_INPUT_BARS:
-            raise ValueError(f"limit must be between 1 and {MAX_INPUT_BARS}")
-
         with self.store.session() as session:
             rows = session.scalars(
                 select(MarketCandle)
@@ -274,7 +271,7 @@ class FeaturePipeline:
                     MarketCandle.is_closed.is_(True),
                 )
                 .order_by(MarketCandle.open_time_utc.desc())
-                .limit(limit)
+                .limit(FEATURE_LOOKBACK_BARS)
             ).all()
             candles = list(reversed(rows))
             if not candles:
