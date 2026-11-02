@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal, InvalidOperation, localcontext
+from decimal import Decimal, DecimalException, InvalidOperation, localcontext
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -75,6 +75,8 @@ class FeatureSnapshotRecord(Base):
     input_count: Mapped[int] = mapped_column(Integer, nullable=False)
     feature_json: Mapped[str] = mapped_column(Text, nullable=False)
     feature_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_window_start_utc: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    input_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
     computed_at_utc: Mapped[str] = mapped_column(String(40), nullable=False)
 
 
@@ -88,6 +90,8 @@ class FeatureSnapshot(BaseModel):
     source: str
     candle_open_time_utc: datetime
     candle_close_time_utc: datetime
+    input_window_start_utc: datetime | None
+    input_digest: str | None
     computed_at_utc: datetime
     input_count: int = Field(ge=1)
     features: dict[str, str | None]
@@ -286,7 +290,10 @@ class FeaturePipeline:
                 }
                 for row in candles
             ]
-            features = _calculate_features(input_rows)
+            try:
+                features = _calculate_features(input_rows)
+            except DecimalException as exc:
+                raise FeatureError("Decimal arithmetic failed while computing features") from exc
             layer_views = {
                 layer: {name: features[name] for name in names}
                 for layer, names in LAYER_FEATURES.items()
@@ -300,6 +307,27 @@ class FeaturePipeline:
                 stable_payload, sort_keys=True, separators=(",", ":"), allow_nan=False
             )
             digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+            input_payload = [
+                {
+                    "schema_version": row.schema_version,
+                    "symbol": row.symbol,
+                    "timeframe": row.timeframe,
+                    "source": row.source,
+                    "open_time_utc": row.open_time_utc,
+                    "close_time_utc": row.close_time_utc,
+                    "open": row.open,
+                    "high": row.high,
+                    "low": row.low,
+                    "close": row.close,
+                    "volume": row.volume,
+                    "sequence": row.sequence,
+                }
+                for row in candles
+            ]
+            input_serialized = json.dumps(
+                input_payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+            )
+            input_digest = hashlib.sha256(input_serialized.encode("utf-8")).hexdigest()
             existing = session.scalar(
                 select(FeatureSnapshotRecord).where(
                     FeatureSnapshotRecord.symbol == normalized_symbol,
@@ -311,7 +339,11 @@ class FeaturePipeline:
             )
             status: Literal["computed", "existing"] = "computed"
             if existing is not None:
-                if existing.feature_digest != digest or existing.feature_json != serialized:
+                if (
+                    existing.feature_digest != digest
+                    or existing.feature_json != serialized
+                    or existing.input_digest != input_digest
+                ):
                     raise FeatureSnapshotConflict(
                         "Existing immutable feature snapshot differs for the same input key"
                     )
@@ -329,6 +361,8 @@ class FeaturePipeline:
                     input_count=len(candles),
                     feature_json=serialized,
                     feature_digest=digest,
+                    input_window_start_utc=candles[0].open_time_utc,
+                    input_digest=input_digest,
                     computed_at_utc=utc_now().isoformat(),
                 )
                 try:
@@ -349,7 +383,11 @@ class FeaturePipeline:
                     )
                     if record is None:
                         raise
-                    if record.feature_digest != digest or record.feature_json != serialized:
+                    if (
+                        record.feature_digest != digest
+                        or record.feature_json != serialized
+                        or record.input_digest != input_digest
+                    ):
                         raise FeatureSnapshotConflict(
                             "Concurrent computation produced a different immutable snapshot"
                         )
@@ -372,6 +410,11 @@ class FeaturePipeline:
                 source=record.source,
                 candle_open_time_utc=datetime.fromisoformat(record.candle_open_time_utc),
                 candle_close_time_utc=close_time,
+                input_window_start_utc=(
+                    datetime.fromisoformat(record.input_window_start_utc)
+                    if record.input_window_start_utc else None
+                ),
+                input_digest=record.input_digest,
                 computed_at_utc=datetime.fromisoformat(record.computed_at_utc),
                 input_count=record.input_count,
                 features=snapshot_payload["features"],
@@ -410,6 +453,11 @@ class FeaturePipeline:
                 source=record.source,
                 candle_open_time_utc=datetime.fromisoformat(record.candle_open_time_utc),
                 candle_close_time_utc=datetime.fromisoformat(record.candle_close_time_utc),
+                input_window_start_utc=(
+                    datetime.fromisoformat(record.input_window_start_utc)
+                    if record.input_window_start_utc else None
+                ),
+                input_digest=record.input_digest,
                 computed_at_utc=datetime.fromisoformat(record.computed_at_utc),
                 input_count=record.input_count,
                 features=payload["features"],
