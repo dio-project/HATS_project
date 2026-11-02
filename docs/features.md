@@ -46,7 +46,7 @@ not guessed; provider-specific FX calendar semantics remain a separate task.
 
 ## Warm-up and eligibility
 
-The initial shared warm-up threshold is 50 closed bars. Before that threshold,
+The calculation uses a fixed maximum lookback of 500 closed bars and a shared warm-up threshold of 50 closed bars. The lookback is fixed rather than caller-selectable so the same immutable input key cannot silently produce different feature values because a request used a different history length. Before that threshold,
 available short-window features may be returned, but the snapshot is marked
 `insufficient_warmup` and is not eligible as a feature input. A stale latest
 closed candle is similarly marked `stale_input`. Historical snapshots can
