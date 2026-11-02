@@ -96,8 +96,9 @@ calculation latency and failures. The endpoints are not connected to Layers
 ## Failure semantics and remaining work
 
 No closed candles returns a typed error. Missing sources do not fall back to a
-different provider. Forming candles are excluded. Non-finite arithmetic is
-rejected. Persistence is protected by a unique input key and digest check;
+different provider. Forming candles are excluded. Future-dated closes, invalid
+or overlapping stored intervals, corrupted OHLC values, and non-finite
+arithmetic are rejected before a snapshot can be persisted. Persistence is protected by a unique input key and digest check;
 concurrent duplicate computations resolve to the existing identical snapshot.
 
 Before production use, add provider-specific gap/session calendars, revision
