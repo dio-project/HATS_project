@@ -40,8 +40,9 @@ OHLC candles in ascending UTC order:
   `close_location`: current candle geometry normalized by its high-low
   range; all are zero for a zero-range candle.
 
-No tick volume, inferred bars, interpolation, future data, or forming candle
-is used. Rolling windows are bar-count based. Session-gap interpretation is
+No tick volume, inferred bars, interpolation, look-ahead observations, or
+forming candle is used. A source candle timestamped in the future is rejected
+before snapshot persistence. Rolling windows are bar-count based. Session-gap interpretation is
 not guessed; provider-specific FX calendar semantics remain a separate task.
 
 ## Warm-up and eligibility
