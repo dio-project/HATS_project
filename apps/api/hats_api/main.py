@@ -214,9 +214,9 @@ def system_status():
     active = store.get_active()
     return {
         "execution_mode": active.layer4.execution_mode,
-        "pipeline": ["market_data", "layer1", "layer2", "layer3", "layer4_risk"],
+        "pipeline": ["market_data", "features", "layer1", "layer2", "layer3", "layer4_risk"],
         "layer3b_enabled": False,
         "broker_connected": False,
         "trading_enabled": False,
-        "note": "Market-data contracts and persistence are available; no provider or broker execution is active.",
+        "note": "Market-data and feature snapshots are available; features are not wired to model inference, and no provider or broker execution is active.",
     }
