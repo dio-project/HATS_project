@@ -17,3 +17,7 @@ The initial backend uses in-memory state. Production requires PostgreSQL transac
 Fail closed for new entries if market data, account/risk state or required model output is stale/unknown. Unknown broker order state is unresolved, not failed; reconcile before retrying. Pausing strategy means disable new entries, not abandon positions or cancel protective orders. Daily loss lockout must persist across restart in production.
 
 Planned boundaries: apps/web (control plane), apps/api (configuration/orchestration), packages/contracts, packages/market-data, packages/model-adapters, packages/broker-adapters, crates/hats-risk (Rust deterministic risk), tests (unit/contract/integration/property/end-to-end). Start as a modular monolith. PostgreSQL is durable source of truth; cache/event infrastructure is not authoritative.
+
+
+## Feature pipeline
+The shared feature pipeline consumes source-specific, closed canonical candles and persists immutable, versioned snapshots. Layer 1, Layer 2, and Layer 3 receive separate projections over the same deterministic core calculations. Feature availability is not a strategy decision or risk authorization. A model adapter must validate feature-set version, warm-up, freshness, nullability, and training/serving compatibility before inference. Layer 4 remains isolated from feature calculations and retains absolute veto authority.
