@@ -193,7 +193,7 @@ export default function MarketDataPanel({ apiBaseUrl, dark }: Props) {
             </select></label>
           </div>
         )}
-        {candles.length > 0 && <CandlestickChart candles={candles} source={activeChartSource} dark={dark} />}
+        {candles.length > 0 && <CandlestickChart candles={candles} source={activeChartSource} symbol={symbol} dark={dark} />}
         {candles.length === 0 ? (
           <div className="market-empty"><WifiOff /><b>No candles returned for {symbol} · {timeframe}</b><p>Once a provider adapter or test client ingests canonical candles, they will appear here.</p></div>
         ) : (
