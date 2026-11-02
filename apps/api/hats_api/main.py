@@ -183,10 +183,9 @@ def compute_latest_features(
     symbol: str = Query(min_length=3, max_length=20),
     timeframe: str = Query(pattern="^(5m|15m|30m|1h|5h|12h|1d)$"),
     source: str = Query(min_length=1, max_length=100),
-    limit: int = Query(default=500, ge=1, le=5000),
 ):
     try:
-        result = feature_pipeline.compute_latest(symbol, timeframe, source, limit)
+        result = feature_pipeline.compute_latest(symbol, timeframe, source)
         return result.model_dump(mode="json")
     except NoClosedCandles as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
