@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, Database, RefreshCw, WifiOff } from "lucide-react";
+import CandlestickChart from "./CandlestickChart";
 
 type Health = {
   status: string;
@@ -40,7 +41,7 @@ type QualityEvent = {
   details: Record<string, unknown>;
 };
 
-type Props = { apiBaseUrl: string };
+type Props = { apiBaseUrl: string; dark: boolean };
 
 const TIMEFRAMES = ["5m", "15m", "30m", "1h", "5h", "12h", "1d"];
 const SYMBOLS = ["EURUSD", "GBPUSD", "USDJPY"];
@@ -72,12 +73,13 @@ function readable(value: string): string {
   return value.replace(/_/g, " ");
 }
 
-export default function MarketDataPanel({ apiBaseUrl }: Props) {
+export default function MarketDataPanel({ apiBaseUrl, dark }: Props) {
   const [health, setHealth] = useState<Health | null>(null);
   const [candles, setCandles] = useState<Candle[]>([]);
   const [events, setEvents] = useState<QualityEvent[]>([]);
   const [symbol, setSymbol] = useState("EURUSD");
   const [timeframe, setTimeframe] = useState("1h");
+  const [chartSource, setChartSource] = useState("all");
   const [limit, setLimit] = useState("100");
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
@@ -124,6 +126,7 @@ export default function MarketDataPanel({ apiBaseUrl }: Props) {
   }, [refresh]);
 
   const qualityErrors = events.filter((event) => event.severity === "error").length;
+  const sources = [...new Set(candles.map((candle) => candle.source))].sort();
   const healthClass = health?.status === "ok" ? "good" : health?.status === "degraded" ? "warning" : "muted";
 
   return (
@@ -181,6 +184,15 @@ export default function MarketDataPanel({ apiBaseUrl }: Props) {
             <label><span>Rows</span><select value={limit} onChange={(event) => setLimit(event.target.value)}>{["50", "100", "250", "500", "1000"].map((item) => <option key={item}>{item}</option>)}</select></label>
           </div>
         </div>
+        {candles.length > 0 && (
+          <div className="chart-source-control">
+            <label><span>Chart data source</span><select value={chartSource} onChange={(event) => setChartSource(event.target.value)}>
+              <option value="all">All sources (deduplicated by candle time)</option>
+              {sources.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select></label>
+          </div>
+        )}
+        {candles.length > 0 && <CandlestickChart candles={candles} source={chartSource} dark={dark} />}
         {candles.length === 0 ? (
           <div className="market-empty"><WifiOff /><b>No candles returned for {symbol} · {timeframe}</b><p>Once a provider adapter or test client ingests canonical candles, they will appear here.</p></div>
         ) : (
