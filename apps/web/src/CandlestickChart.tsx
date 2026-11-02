@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CandlestickSeries, ColorType, createChart, CrosshairMode, type CandlestickData, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 
 type Candle = { open_time_utc: string; open: string; high: string; low: string; close: string; source: string };
-type Props = { candles: Candle[]; source: string; dark: boolean };
+type Props = { candles: Candle[]; source: string; symbol: string; dark: boolean };
 type Ohlc = { open: string; high: string; low: string; close: string };
-const price = (value: number) => value.toFixed(5);
+const price = (value: number, symbol: string) => value.toFixed(symbol.endsWith("JPY") ? 3 : 5);
 
-export default function CandlestickChart({ candles, source, dark }: Props) {
+export default function CandlestickChart({ candles, source, symbol, dark }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -47,10 +47,10 @@ export default function CandlestickChart({ candles, source, dark }: Props) {
     chart.subscribeCrosshairMove(param => {
       if (!param.time) { setHover(null); return; }
       const point = param.seriesData.get(series) as CandlestickData<Time> | undefined;
-      setHover(point ? { open: price(point.open), high: price(point.high), low: price(point.low), close: price(point.close) } : null);
+      setHover(point ? { open: price(point.open, symbol), high: price(point.high, symbol), low: price(point.low, symbol), close: price(point.close, symbol) } : null);
     });
     return () => { observer.disconnect(); chart.remove(); chartRef.current = null; seriesRef.current = null; };
-  }, [dark]);
+  }, [dark, symbol]);
 
   useEffect(() => {
     if (!seriesRef.current || !chartRef.current) return;
@@ -63,10 +63,10 @@ export default function CandlestickChart({ candles, source, dark }: Props) {
   return <section className="candle-chart-panel">
     <div className="candle-chart-heading"><div><h3>Price chart</h3><p className="sub">OHLC candles · UTC · scroll to pan, wheel/pinch to zoom</p></div><span className="version-tag">{data.length} bars</span></div>
     <div className="candle-ohlc" aria-live="polite">
-      <span>O <b>{hover?.open ?? (latest ? price(latest.open) : "—")}</b></span>
-      <span>H <b>{hover?.high ?? (latest ? price(latest.high) : "—")}</b></span>
-      <span>L <b>{hover?.low ?? (latest ? price(latest.low) : "—")}</b></span>
-      <span>C <b>{hover?.close ?? (latest ? price(latest.close) : "—")}</b></span>
+      <span>O <b>{hover?.open ?? (latest ? price(latest.open, symbol) : "—")}</b></span>
+      <span>H <b>{hover?.high ?? (latest ? price(latest.high, symbol) : "—")}</b></span>
+      <span>L <b>{hover?.low ?? (latest ? price(latest.low, symbol) : "—")}</b></span>
+      <span>C <b>{hover?.close ?? (latest ? price(latest.close, symbol) : "—")}</b></span>
     </div>
     <div ref={host} className="candle-chart" role="img" aria-label="Interactive market candlestick chart" />
     <p className="market-caption">Plotted from stored canonical OHLC values. Select a source to avoid mixing feeds.</p>
