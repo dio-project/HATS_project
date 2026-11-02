@@ -50,13 +50,13 @@ The calculation uses a fixed maximum lookback of 500 closed bars and a shared wa
 the snapshot is marked `insufficient_warmup` and is not eligible as a feature
 input. Freshness uses provisional timeframe-specific limits: 15m for 5m bars,
 45m for 15m, 90m for 30m, 3h for 1h, 15h for 5h, 36h for 12h, and 72h for 1d.
-A stale latest closed candle is marked `stale_input`; a candle whose close
-timestamp is still in the future is marked `future_input`. These wall-clock
-limits are bootstrap values, not a session calendar. Provider-specific trading
-sessions, holidays, weekend reopen, and feed outages must be distinguished
-before live eligibility is enabled. Historical snapshots can still be
-generated for offline research, but these flags must be respected by any
-downstream live pipeline.
+A stale latest closed candle is marked `stale_input`. A candle whose close
+timestamp is in the future is rejected before feature computation and no
+snapshot is persisted. These wall-clock limits are bootstrap values, not a
+session calendar. Provider-specific trading sessions, holidays, weekend
+reopen, and feed outages must be distinguished before live eligibility is
+enabled. Historical snapshots can still be generated for offline research,
+but these flags must be respected by any downstream live pipeline.
 
 This is a preliminary feature-input eligibility check, not a complete
 market-data gate or Layer 4 risk authorization. It does not authorize orders.
