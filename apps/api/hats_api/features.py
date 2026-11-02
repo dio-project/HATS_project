@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal, localcontext
+from decimal import Decimal, InvalidOperation, localcontext
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -97,12 +97,15 @@ class FeatureSnapshot(BaseModel):
 class FeatureComputationResult(BaseModel):
     status: Literal["computed", "existing"]
     snapshot: FeatureSnapshot
-    trading_input_eligible: bool
+    feature_input_eligible: bool
     quality_flags: list[str]
 
 
 def _decimal(value: str) -> Decimal:
-    result = Decimal(value)
+    try:
+        result = Decimal(value)
+    except InvalidOperation as exc:
+        raise FeatureError("Invalid decimal encountered in stored candle data") from exc
     if not result.is_finite():
         raise FeatureError("Non-finite price encountered in stored candle data")
     return result
@@ -380,7 +383,7 @@ class FeaturePipeline:
             return FeatureComputationResult(
                 status=status,
                 snapshot=snapshot,
-                trading_input_eligible=not flags,
+                feature_input_eligible=not flags,
                 quality_flags=flags,
             )
 
@@ -424,6 +427,6 @@ class FeaturePipeline:
             return FeatureComputationResult(
                 status="existing",
                 snapshot=snapshot,
-                trading_input_eligible=not flags,
+                feature_input_eligible=not flags,
                 quality_flags=flags,
             )
