@@ -7,10 +7,10 @@ interpretation belongs in a future provider-specific adapter.
 from __future__ import annotations
 
 import csv
+from collections.abc import Iterator
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from collections.abc import Iterator
 
 from pydantic import ValidationError
 
