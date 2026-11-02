@@ -163,6 +163,7 @@ class CSVReplayAdapter:
         for candle in self.iter_candles(path):
             result: CandleIngestResult = service.ingest(candle)
             counts["records_read"] += 1
-            counts[result.status] += 1
+            count_key = "duplicates" if result.status == "duplicate" else result.status
+            counts[count_key] += 1
             counts["quality_event_count"] += len(result.quality_events)
         return ReplayReport(**counts)
