@@ -48,7 +48,7 @@ not guessed; provider-specific FX calendar semantics remain a separate task.
 
 The initial shared warm-up threshold is 50 closed bars. Before that threshold,
 available short-window features may be returned, but the snapshot is marked
-`insufficient_warmup` and is not eligible as a trading input. A stale latest
+`insufficient_warmup` and is not eligible as a feature input. A stale latest
 closed candle is similarly marked `stale_input`. Historical snapshots can
 still be generated for offline research, but these flags must be respected by
 any downstream live pipeline.
