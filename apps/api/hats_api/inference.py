@@ -5,8 +5,10 @@ implement model inference, strategy policy, order construction, or risk checks.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Literal
 
@@ -110,6 +112,17 @@ def validate_model_input(
         raise ModelInputValidationError("Feature snapshot input provenance is missing or invalid")
     if not _SHA256_PATTERN.fullmatch(snapshot.feature_digest):
         raise ModelInputValidationError("Feature snapshot output digest is invalid")
+    serialized_features = json.dumps(
+        {"features": snapshot.features, "layer_views": snapshot.layer_views},
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    expected_feature_digest = hashlib.sha256(
+        serialized_features.encode("utf-8")
+    ).hexdigest()
+    if snapshot.feature_digest != expected_feature_digest:
+        raise ModelInputValidationError("Feature snapshot output digest does not match payload")
 
     layer_view = snapshot.layer_views.get(contract.layer)
     if layer_view is None:
