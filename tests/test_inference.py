@@ -1,3 +1,5 @@
+import hashlib
+import json
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -32,6 +34,13 @@ def make_snapshot(**overrides):
         },
     }
     payload.update(overrides)
+    serialized = json.dumps(
+        {"features": payload["features"], "layer_views": payload["layer_views"]},
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    payload["feature_digest"] = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
     return FeatureSnapshot.model_validate(payload)
 
 
@@ -98,7 +107,12 @@ def test_stale_snapshot_is_rejected():
 def test_wrong_layer_projection_is_rejected():
     with pytest.raises(ModelInputValidationError, match="does not contain projection"):
         validate_model_input(
-            make_snapshot(),
+            make_snapshot(
+                layer_views={
+                    "layer1_environment": {"return_1": "0.001", "atr_pct": "0.002"},
+                    "layer2_phase": {"return_1": "0.001", "rsi_14": "55"},
+                }
+            ),
             make_contract(layer="layer3_entry"),
             now=datetime.now(UTC),
         )
@@ -159,3 +173,10 @@ def test_contract_rejects_duplicate_and_invalid_nullable_feature_names():
         make_contract(required_features=("return_1", "return_1"))
     with pytest.raises(ValueError, match="also be required"):
         make_contract(nullable_features=("ema_50",))
+
+
+
+def test_feature_digest_must_match_snapshot_payload():
+    snapshot = make_snapshot(feature_digest="c" * 64)
+    with pytest.raises(ModelInputValidationError, match="does not match payload"):
+        validate_model_input(snapshot, make_contract(), now=datetime.now(UTC))
