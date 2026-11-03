@@ -116,3 +116,23 @@ concurrency/integration tests, property-based tests, and a model-specific
 feature compatibility registry. Model inference must independently reject
 wrong schema versions, stale snapshots, unexpected nulls, and mismatched
 training/serving feature definitions.
+
+
+## Model-serving input contracts
+
+The model boundary now has a typed, immutable `ModelInputContract` and a
+single validation function. A model contract declares its predictive layer,
+model identifier/version, expected feature-set and schema versions, required
+feature names, explicitly nullable fields, minimum input count, and maximum
+snapshot age. Validation rejects incompatible versions, missing provenance,
+invalid digests, future or stale snapshots, unavailable projections, null
+required values, and non-finite/non-decimal feature values.
+
+The output is a provenance-carrying `ValidatedModelInput` with Decimal-valued
+features. This is an adapter input, not a prediction or trading signal. Each
+model deployment must supply its own reviewed contract; the bootstrap
+contracts do not choose regime labels, phase labels, entry semantics, or
+confidence thresholds. Model outputs and the Layer 1 → Layer 2 → Layer 3
+orchestrator are intentionally not defined until those output semantics and
+gating policies are specified. Layer 4 remains outside this module and cannot
+be bypassed or modified by a model contract.
