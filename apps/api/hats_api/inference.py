@@ -14,7 +14,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from hats_api.features import FeatureSnapshot
+from hats_api.features import MINIMUM_WARMUP_BARS, FeatureSnapshot
 
 
 PredictiveLayer = Literal[
@@ -98,10 +98,20 @@ def validate_model_input(
         raise ModelInputValidationError("Feature schema version does not match model contract")
     if snapshot.feature_set_version != contract.feature_set_version:
         raise ModelInputValidationError("Feature set version does not match model contract")
-    if snapshot.input_count < contract.minimum_input_count:
+    minimum_input_count = max(MINIMUM_WARMUP_BARS, contract.minimum_input_count)
+    if snapshot.input_count < minimum_input_count:
         raise ModelInputValidationError("Feature input window is below model minimum")
-    if snapshot.candle_close_time_utc.tzinfo is None:
+    if (
+        snapshot.candle_close_time_utc.tzinfo is None
+        or snapshot.candle_close_time_utc.utcoffset() is None
+    ):
         raise ModelInputValidationError("Feature snapshot timestamp must be timezone-aware")
+    if (
+        snapshot.input_window_start_utc is None
+        or snapshot.input_window_start_utc.tzinfo is None
+        or snapshot.input_window_start_utc.utcoffset() is None
+    ):
+        raise ModelInputValidationError("Feature snapshot input-window provenance is missing")
 
     age_seconds = (instant - snapshot.candle_close_time_utc.astimezone(UTC)).total_seconds()
     if age_seconds < 0:
