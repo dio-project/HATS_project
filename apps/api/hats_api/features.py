@@ -9,8 +9,8 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime
-from itertools import pairwise
 from decimal import Decimal, DecimalException, InvalidOperation, localcontext
+from itertools import pairwise
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import argparse
 import csv
 from datetime import UTC, datetime, timedelta

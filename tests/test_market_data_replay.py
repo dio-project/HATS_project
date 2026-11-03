@@ -6,7 +6,6 @@ from hats_api.market_data import MarketDataService
 from hats_api.replay import CSVReplayAdapter, CSVReplayError
 from hats_api.storage import ConfigStore
 
-
 HEADER = (
     "symbol,timeframe,open_time_utc,close_time_utc,open,high,low,close,"
     "is_closed,volume,sequence,source_timestamp,source_timezone\n"
