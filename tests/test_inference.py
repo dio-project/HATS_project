@@ -34,13 +34,16 @@ def make_snapshot(**overrides):
         },
     }
     payload.update(overrides)
+    supplied_digest = payload["feature_digest"] if "feature_digest" in overrides else None
     serialized = json.dumps(
         {"features": payload["features"], "layer_views": payload["layer_views"]},
         sort_keys=True,
         separators=(",", ":"),
         allow_nan=False,
     )
-    payload["feature_digest"] = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    payload["feature_digest"] = (
+        supplied_digest or hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    )
     return FeatureSnapshot.model_validate(payload)
 
 
