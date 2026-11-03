@@ -33,7 +33,7 @@ def make_snapshot(**overrides):
             "layer3_entry": {"return_1": "0.001", "atr_14": "0.0004"},
         },
     }
-    payload.update(overrides)
+    payload.update({key: value for key, value in overrides.items() if key != "schema_version"})
     supplied_digest = payload["feature_digest"] if "feature_digest" in overrides else None
     serialized = json.dumps(
         {"features": payload["features"], "layer_views": payload["layer_views"]},
@@ -44,7 +44,10 @@ def make_snapshot(**overrides):
     payload["feature_digest"] = (
         supplied_digest or hashlib.sha256(serialized.encode("utf-8")).hexdigest()
     )
-    return FeatureSnapshot.model_validate(payload)
+    snapshot = FeatureSnapshot.model_validate(payload)
+    if "schema_version" in overrides:
+        snapshot = snapshot.model_copy(update={"schema_version": overrides["schema_version"]})
+    return snapshot
 
 
 def make_contract(**overrides):
@@ -80,7 +83,7 @@ def test_valid_model_input_preserves_model_and_data_provenance():
     ("snapshot_overrides", "message"),
     [
         ({"schema_version": 2}, "schema version"),
-        ({"feature_set_version": "core-v2"}, "feature set version"),
+        ({"feature_set_version": "core-v2"}, "(?i)feature set version"),
         ({"input_count": 10}, "below model minimum"),
         ({"input_digest": None}, "provenance"),
         ({"feature_digest": "invalid"}, "output digest"),
