@@ -16,7 +16,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from hats_api.features import MINIMUM_WARMUP_BARS, FeatureSnapshot
 
-
 PredictiveLayer = Literal[
     "layer1_environment",
     "layer2_phase",
